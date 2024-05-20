@@ -37,6 +37,33 @@ const Matches: CollectionConfig = {
     ],
     endpoints: [
         {
+            path: '/getDiscoveryData',
+            method: 'get',
+            handler: async (req, res, next) => {
+                const { gender, lookingGender, userId, ageFrom, ageTo, latitude, longitude, radius} = req.body;
+
+                if (!ageFrom || !ageTo) {
+                    return res.status(400).json({ error: 'Missing required parameters' })
+                }
+
+                const currentDate = new Date();
+                const fromDate = new Date(currentDate.getFullYear() - ageFrom, currentDate.getMonth(), currentDate.getDate());
+                const toDate = new Date(currentDate.getFullYear() - ageTo - 1, currentDate.getMonth(), currentDate.getDate());
+
+                const findData = await req.payload.find({
+                    collection: 'users',
+                    where: {
+                        birthDate: {
+                            greater_than_equal:  toDate,
+                            less_than_equal: fromDate
+                        },
+                    },
+                })
+
+                res.status(200).json({findData})
+            },
+        },
+        {
             path: '/handleLike',
             method: 'post',
             handler: async (req, res, next) => {
