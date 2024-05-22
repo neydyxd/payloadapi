@@ -1,5 +1,7 @@
 import express from 'express'
 import payload from 'payload'
+import jwt from 'jsonwebtoken'
+import { sendCode } from './utils/sendCode'
 
 require('dotenv').config()
 const app = express()
@@ -19,7 +21,6 @@ const start = async () => {
     },
   })
 
-  // Add your own express routes here
 
   app.listen(3000)
 }

@@ -42,7 +42,7 @@ const Matches: CollectionConfig = {
             handler: async (req, res, next) => {
                 const { gender, lookingGender, userId, ageFrom, ageTo, latitude, longitude, radius} = req.body;
 
-                if (!ageFrom || !ageTo) {
+                if (!ageFrom || !ageTo || !gender || !lookingGender || !latitude || !longitude || !radius) {
                     return res.status(400).json({ error: 'Missing required parameters' })
                 }
 
@@ -53,9 +53,18 @@ const Matches: CollectionConfig = {
                 const findData = await req.payload.find({
                     collection: 'users',
                     where: {
-                        birthDate: {
+                        coordinates: {
+                            near: [latitude, longitude, radius*1000, 0]
+                        },
+                        birth: {
                             greater_than_equal:  toDate,
                             less_than_equal: fromDate
+                        },
+                        gender: {
+                            equals: lookingGender
+                        },
+                        lookingGender: {
+                            equals: gender
                         },
                     },
                 })

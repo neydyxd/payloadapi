@@ -1,5 +1,5 @@
 import { CollectionConfig } from 'payload/types'
-
+import payload from 'payload'
 
 const Users: CollectionConfig = {
   slug: 'users',
@@ -14,14 +14,14 @@ const Users: CollectionConfig = {
       label: 'Name'
     },
     {
-      name: 'birthDate',
-      type: 'date',
-      label: 'BirthDate'
-    },
-    {
       name: 'coordinates',
       type: 'point',
       label: 'Coordinates'
+    },
+    {
+      name: 'birth',
+      type: 'date',
+      label: 'BirthDate'
     },
     {
       name: 'chats',
@@ -121,6 +121,64 @@ const Users: CollectionConfig = {
         })
 
         res.status(200).json({ users, newObject })
+      },
+    },
+    {
+      path: '/sendMessage',
+      method: 'post',
+      handler: async (req, res, next) => {
+        const { phoneNumber, code } = req.body;
+        if (!phoneNumber) {
+          return res.status(400).json({ error: 'Missing required parameters' })
+        }
+
+        const user = await payload.find({
+          collection: 'users',
+          where: {
+            email: {
+              equals: phoneNumber + "@mail.ru"
+            },
+          }
+        });
+        var id;
+        if (typeof user.docs[0].id === "string") {
+          id = user.docs[0].id;
+        }
+
+        const updatedUser = await payload.update({
+          collection: 'users',
+          id,
+          data: {
+            password: code,
+          }
+        });
+
+        res.status(200).json({ updatedUser })
+      },
+    },
+    {
+      path: '/customLogin',
+      method: 'post',
+      handler: async (req, res, next) => {
+        const { phoneNumber, code } = req.body;
+        if (!phoneNumber) {
+          return res.status(400).json({ error: 'Missing required parameters' })
+        }
+
+        if (typeof phoneNumber === "string" && typeof code === "string") {
+          const logginedUser = await payload.login({
+            collection: 'users',
+            data: {
+              email: phoneNumber + '@mail.ru',
+              password: code
+            }
+          })
+          res.status(200).json({ logginedUser })
+        }
+
+
+
+
       },
     },
   ],
