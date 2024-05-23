@@ -1,7 +1,5 @@
 import express from 'express'
 import payload from 'payload'
-import jwt from 'jsonwebtoken'
-import { sendCode } from './utils/generateVerificationCode'
 
 require('dotenv').config()
 const app = express()
