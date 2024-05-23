@@ -1,5 +1,6 @@
 import { CollectionConfig } from 'payload/types'
 import payload from 'payload'
+import { generateVerificationCode } from '../utils/generateVerificationCode'
 
 const Users: CollectionConfig = {
   slug: 'users',
@@ -127,7 +128,7 @@ const Users: CollectionConfig = {
       path: '/sendMessage',
       method: 'post',
       handler: async (req, res, next) => {
-        const { phoneNumber, code } = req.body;
+        const { phoneNumber } = req.body;
         if (!phoneNumber) {
           return res.status(400).json({ error: 'Missing required parameters' })
         }
@@ -140,20 +141,45 @@ const Users: CollectionConfig = {
             },
           }
         });
-        var id;
-        if (typeof user.docs[0].id === "string") {
-          id = user.docs[0].id;
+
+        if (user.docs.length !== 0) {
+          var id;
+          if (typeof user.docs[0].id === "string") {
+            id = user.docs[0].id;
+          }
+          const messageCode = generateVerificationCode();
+          const updatedUser = await payload.update({
+            collection: 'users',
+            id,
+            data: {
+              password: messageCode,
+            }
+          });
+          fetch(`https://sms.ru/sms/send?api_id=7E0FBE78-AA59-8876-9E4C-A4904B014E50&to=${phoneNumber}&msg=Ваш+код:+${messageCode}&json=1`)
+            .then(() => {
+              res.status(200).json({ updatedUser, messageCode })
+            })
+            .catch((error) => {
+              res.status(400).send(error)
+            })
+        } else {
+          const messageCode = generateVerificationCode();
+          const newUser = await payload.create({
+            collection: 'users',
+            data: {
+              email: phoneNumber + "@mail.ru",
+              password: messageCode,
+            }
+          });
+          fetch(`https://sms.ru/sms/send?api_id=7E0FBE78-AA59-8876-9E4C-A4904B014E50&to=${phoneNumber}&msg=Ваш+код:+${messageCode}&json=1`)
+            .then(() => {
+              res.status(200).json({ newUser, messageCode })
+            })
+            .catch((error) => {
+              res.status(400).send(error)
+            })
         }
 
-        const updatedUser = await payload.update({
-          collection: 'users',
-          id,
-          data: {
-            password: code,
-          }
-        });
-
-        res.status(200).json({ updatedUser })
       },
     },
     {
@@ -175,10 +201,6 @@ const Users: CollectionConfig = {
           })
           res.status(200).json({ logginedUser })
         }
-
-
-
-
       },
     },
   ],
